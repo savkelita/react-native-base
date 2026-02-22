@@ -2,6 +2,7 @@ import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { makeUseProgram } from 'tea-effect/React'
+import { ThemeProvider } from './common/theme/context'
 import { TeaContext } from './context'
 import * as Router from './router'
 import { AppNavigator } from './router/components/app-navigator'
@@ -13,11 +14,13 @@ export default function App() {
 
   return (
     <GestureHandlerRootView>
-      <SafeAreaProvider>
-        <TeaContext.Provider value={{ model, dispatch }}>
-          <AppNavigator model={model} dispatch={dispatch} />
-        </TeaContext.Provider>
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <TeaContext.Provider value={{ model, dispatch }}>
+            <AppNavigator model={model} dispatch={dispatch} />
+          </TeaContext.Provider>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   )
 }

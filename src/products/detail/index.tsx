@@ -3,7 +3,9 @@ import { Option } from 'effect'
 import * as Cmd from 'tea-effect/Cmd'
 import * as Http from 'tea-effect/Http'
 import type * as Platform from 'tea-effect/Platform'
-import { colors, spacing, typography } from '../../common/theme'
+import { spacing, radii, shadows } from '../../common/theme'
+import type { Colors } from '../../common/theme'
+import { useTheme } from '../../common/theme/context'
 import * as Api from '../api'
 import type { Model } from './model'
 import { Msg, productLoaded, productFailed } from './msg'
@@ -47,6 +49,9 @@ export const ProductDetailView = ({
   readonly model: Model
   readonly dispatch: Platform.Dispatch<Msg>
 }) => {
+  const { colors, typography } = useTheme()
+  const styles = createStyles(colors)
+
   if (model.isLoading) {
     return (
       <View style={styles.centered}>
@@ -80,11 +85,13 @@ export const ProductDetailView = ({
       <View style={styles.details}>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Price</Text>
-          <Text style={styles.detailValue}>${product.price.toFixed(2)}</Text>
+          <Text style={[styles.detailValue, { color: colors.primary }]}>${product.price.toFixed(2)}</Text>
         </View>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Rating</Text>
-          <Text style={styles.detailValue}>{product.rating.toFixed(1)}</Text>
+          <Text style={styles.detailValue}>
+            {'\u2605'} {product.rating.toFixed(1)}
+          </Text>
         </View>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Stock</Text>
@@ -95,18 +102,33 @@ export const ProductDetailView = ({
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.l, gap: spacing.m },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  image: { width: '100%', height: 250, borderRadius: 8, backgroundColor: colors.surface },
-  brand: { fontSize: 16, color: colors.textSecondary },
-  category: { fontSize: 14, color: colors.textSecondary, textTransform: 'capitalize' },
-  description: { fontSize: 15, color: colors.text, lineHeight: 22 },
-  details: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: spacing.m },
-  detailItem: { alignItems: 'center', gap: spacing.xs },
-  detailLabel: { fontSize: 13, color: colors.textSecondary },
-  detailValue: { fontSize: 18, fontWeight: '600', color: colors.text },
-  errorBar: { backgroundColor: '#FDE7E9', padding: spacing.m, borderRadius: 4 },
-  errorText: { color: colors.error },
-})
+const createStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: spacing.l, gap: spacing.m },
+    centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+    image: { width: '100%', height: 280, borderRadius: radii.l, backgroundColor: colors.surface },
+    brand: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
+    category: { fontSize: 13, color: colors.textTertiary, textTransform: 'capitalize' },
+    description: { fontSize: 16, color: colors.textSecondary, lineHeight: 24 },
+    details: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: colors.surface,
+      padding: spacing.l,
+      borderRadius: radii.l,
+      marginTop: spacing.s,
+      ...shadows.sm,
+    },
+    detailItem: { alignItems: 'center', gap: spacing.xs },
+    detailLabel: { fontSize: 13, fontWeight: '500', color: colors.textSecondary, letterSpacing: 0.2 },
+    detailValue: { fontSize: 20, fontWeight: '700', color: colors.text },
+    errorBar: {
+      backgroundColor: colors.errorLight,
+      padding: spacing.m,
+      borderRadius: radii.s,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.error,
+    },
+    errorText: { color: colors.error },
+  })
