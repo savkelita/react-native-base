@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Image, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, FlatList, Image, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native'
 import { Option } from 'effect'
 import * as Cmd from 'tea-effect/Cmd'
 import * as Http from 'tea-effect/Http'
@@ -48,8 +48,8 @@ export const update = (msg: Msg, model: Model): [Model, Cmd.Cmd<Msg>] =>
 // View
 // -------------------------------------------------------------------------------------
 
-const ProductRow = ({ item }: { readonly item: Product }) => (
-  <View style={styles.row}>
+const ProductRow = ({ item, onPress }: { readonly item: Product; readonly onPress: () => void }) => (
+  <TouchableOpacity style={styles.row} onPress={onPress}>
     <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} />
     <View style={styles.info}>
       <Text style={styles.productTitle}>{item.title}</Text>
@@ -60,15 +60,17 @@ const ProductRow = ({ item }: { readonly item: Product }) => (
         <Text style={styles.stock}>Stock: {item.stock}</Text>
       </View>
     </View>
-  </View>
+  </TouchableOpacity>
 )
 
 export const ProductsView = ({
   model,
   dispatch: _dispatch,
+  onProductSelected,
 }: {
   readonly model: Model
   readonly dispatch: Platform.Dispatch<Msg>
+  readonly onProductSelected: (product: Product) => void
 }) => (
   <View style={styles.container}>
     <Text style={typography.title1}>Products</Text>
@@ -82,7 +84,7 @@ export const ProductsView = ({
       <FlatList
         data={model.products}
         keyExtractor={item => String(item.id)}
-        renderItem={({ item }) => <ProductRow item={item} />}
+        renderItem={({ item }) => <ProductRow item={item} onPress={() => onProductSelected(item)} />}
         contentContainerStyle={styles.list}
       />
     )}

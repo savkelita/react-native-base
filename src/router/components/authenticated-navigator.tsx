@@ -1,69 +1,114 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+  DrawerToggleButton,
+} from '@react-navigation/drawer'
+import type { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import type * as Platform from 'tea-effect/Platform'
 import * as Home from '../../home'
+import * as ProductDetail from '../../products/detail'
 import * as Products from '../../products'
-import { colors } from '../../common/theme'
-import { screen, logout, navigate } from '../msg'
+import { colors, spacing } from '../../common/theme'
+import { screen, logout, navigate, navigateToProduct } from '../msg'
 import type { Model } from '../model'
 import type { Msg } from '../msg'
-import { homeMsg, productsMsg } from '../screen-msg'
+import { homeMsg, productsMsg, productDetailMsg } from '../screen-msg'
 
-const Stack = createNativeStackNavigator()
+const Drawer = createDrawerNavigator()
+const ProductsStack = createNativeStackNavigator()
 
 type Props = {
   readonly model: Extract<Model, { _tag: 'Authenticated' }>
   readonly dispatch: Platform.Dispatch<Msg>
 }
 
-const LogoutButton = ({ dispatch }: { readonly dispatch: Platform.Dispatch<Msg> }) => (
-  <TouchableOpacity onPress={() => dispatch(logout())}>
-    <Text style={styles.logoutText}>Logout</Text>
-  </TouchableOpacity>
+type DrawerProps = DrawerContentComponentProps & {
+  readonly dispatch: Platform.Dispatch<Msg>
+}
+
+const CustomDrawerContent = ({ dispatch, ...props }: DrawerProps) => (
+  <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
+    <View style={styles.drawerItems}>
+      <DrawerItemList {...props} />
+    </View>
+    <View style={styles.drawerFooter}>
+      <View style={styles.separator} />
+      <DrawerItem label="Logout" labelStyle={styles.logoutLabel} onPress={() => dispatch(logout())} />
+    </View>
+  </DrawerContentScrollView>
 )
 
-const NavigateButton = ({
-  dispatch,
-  screenName,
-  label,
-}: {
-  readonly dispatch: Platform.Dispatch<Msg>
-  readonly screenName: string
-  readonly label: string
-}) => (
-  <TouchableOpacity onPress={() => dispatch(navigate(screenName))}>
-    <Text style={styles.navText}>{label}</Text>
-  </TouchableOpacity>
+const onFocus = (dispatch: Platform.Dispatch<Msg>, screenName: string) => ({
+  focus: () => dispatch(navigate(screenName)),
+})
+
+const ProductsStackNavigator = ({ model, dispatch }: Props) => (
+  <ProductsStack.Navigator>
+    <ProductsStack.Screen
+      name="ProductList"
+      options={{ title: 'Products', headerLeft: () => <DrawerToggleButton /> }}
+      listeners={onFocus(dispatch, 'Products')}
+    >
+      {() => {
+        if (model.screen._tag !== 'ProductsScreen') return null
+        return (
+          <Products.ProductsView
+            model={model.screen.model}
+            dispatch={msg => dispatch(screen(productsMsg(msg)))}
+            onProductSelected={product => dispatch(navigateToProduct(product.id))}
+          />
+        )
+      }}
+    </ProductsStack.Screen>
+    <ProductsStack.Screen name="ProductDetail" options={{ title: 'Product Detail' }}>
+      {() => {
+        if (model.screen._tag !== 'ProductDetailScreen') return null
+        return (
+          <ProductDetail.ProductDetailView
+            model={model.screen.model}
+            dispatch={msg => dispatch(screen(productDetailMsg(msg)))}
+          />
+        )
+      }}
+    </ProductsStack.Screen>
+  </ProductsStack.Navigator>
 )
 
 export const AuthenticatedNavigator = ({ model, dispatch }: Props) => (
-  <Stack.Navigator
-    screenOptions={{
-      headerRight: () => <LogoutButton dispatch={dispatch} />,
-    }}
-  >
-    <Stack.Screen
-      name="Home"
-      options={{
-        title: 'Home',
-        headerLeft: () => <NavigateButton dispatch={dispatch} screenName="Products" label="Products" />,
-      }}
-    >
+  <Drawer.Navigator drawerContent={props => <CustomDrawerContent {...props} dispatch={dispatch} />}>
+    <Drawer.Screen name="Home" options={{ title: 'Home' }} listeners={onFocus(dispatch, 'Home')}>
       {() => {
         if (model.screen._tag !== 'HomeScreen') return null
         return <Home.HomeView model={model.screen.model} dispatch={msg => dispatch(screen(homeMsg(msg)))} />
       }}
-    </Stack.Screen>
-    <Stack.Screen name="Products" options={{ title: 'Products' }}>
-      {() => {
-        if (model.screen._tag !== 'ProductsScreen') return null
-        return <Products.ProductsView model={model.screen.model} dispatch={msg => dispatch(screen(productsMsg(msg)))} />
-      }}
-    </Stack.Screen>
-  </Stack.Navigator>
+    </Drawer.Screen>
+    <Drawer.Screen name="Products" options={{ headerShown: false }}>
+      {() => <ProductsStackNavigator model={model} dispatch={dispatch} />}
+    </Drawer.Screen>
+  </Drawer.Navigator>
 )
 
 const styles = StyleSheet.create({
-  logoutText: { color: colors.error, fontSize: 16 },
-  navText: { color: colors.primary, fontSize: 16 },
+  drawerContainer: {
+    flex: 1,
+  },
+  drawerItems: {
+    flex: 1,
+  },
+  drawerFooter: {
+    paddingBottom: spacing.m,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.xs,
+  },
+  logoutLabel: {
+    color: colors.error,
+  },
 })

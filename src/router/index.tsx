@@ -6,14 +6,15 @@ import * as Api from '../auth/api'
 import { Session, SESSION_KEY, toAuthorizationConfig } from '../auth/session'
 import { hasAllPermissions } from '../auth/types'
 import * as Home from '../home'
+import * as ProductDetail from '../products/detail'
 import * as Products from '../products'
 import * as Login from '../login'
 import * as Storage from '../tea/storage'
 import * as NavigationCmd from '../tea/navigation-cmd'
 import { Model } from './model'
 import { Msg, screen, sessionLoaded, sessionLoadError, login, refreshTick, refreshCompleted } from './msg'
-import { ScreenModel, homeScreen, productsScreen } from './screen-model'
-import { ScreenMsg, homeMsg, productsMsg } from './screen-msg'
+import { ScreenModel, homeScreen, productsScreen, productDetailScreen } from './screen-model'
+import { ScreenMsg, homeMsg, productsMsg, productDetailMsg } from './screen-msg'
 
 export type { Model }
 export type { Msg }
@@ -80,6 +81,11 @@ const updateScreen = (msg: ScreenMsg, screenModel: ScreenModel): [ScreenModel, C
       const [model, cmd] = Products.update(productsMessage, screenModel.model)
       return [productsScreen(model), Cmd.map(productsMsg)(cmd)]
     },
+    ProductDetailMsg: ({ msg: productDetailMessage }): [ScreenModel, Cmd.Cmd<ScreenMsg>] => {
+      if (screenModel._tag !== 'ProductDetailScreen') return [screenModel, Cmd.none]
+      const [model, cmd] = ProductDetail.update(productDetailMessage, screenModel.model)
+      return [productDetailScreen(model), Cmd.map(productDetailMsg)(cmd)]
+    },
   })
 
 const initAuthenticated = (session: typeof Session.Type): [Model, Cmd.Cmd<Msg>] => {
@@ -140,6 +146,15 @@ export const update = (msg: Msg, model: Model): [Model, Cmd.Cmd<Msg>] =>
       if (model._tag !== 'Authenticated') return [model, Cmd.none]
       const [screenModel, screenCmd] = updateScreen(screenMsg, model.screen)
       return [Model.Authenticated({ ...model, screen: screenModel }), Cmd.map(screen)(screenCmd)]
+    },
+
+    NavigateToProduct: ({ productId }): [Model, Cmd.Cmd<Msg>] => {
+      if (model._tag !== 'Authenticated') return [model, Cmd.none]
+      const [detailModel, detailCmd] = ProductDetail.init(productId)
+      return [
+        Model.Authenticated({ ...model, screen: productDetailScreen(detailModel) }),
+        Cmd.batch([Cmd.map(screen)(Cmd.map(productDetailMsg)(detailCmd)), NavigationCmd.navigate('ProductDetail')]),
+      ]
     },
 
     Navigate: ({ screenName }): [Model, Cmd.Cmd<Msg>] => {

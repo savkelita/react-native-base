@@ -28,7 +28,18 @@ describe('Products', () => {
     it('should set products on successful ProductsLoaded', () => {
       const [model] = init
       const products = [
-        { id: 1, title: 'Phone', category: 'smartphones', price: 549, rating: 4.5, stock: 10, thumbnail: 'img.jpg' },
+        {
+          id: 1,
+          title: 'Phone',
+          description: 'A smartphone',
+          category: 'smartphones',
+          price: 549,
+          rating: 4.5,
+          stock: 10,
+          brand: 'Brand',
+          thumbnail: 'img.jpg',
+          images: ['img.jpg'],
+        },
       ]
       const [newModel, cmd] = update(Msg.ProductsLoaded({ response: { products, total: 1 } }), model)
       expect(newModel.products).toEqual(products)

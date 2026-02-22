@@ -15,6 +15,7 @@ export type Msg = Data.TaggedEnum<{
   RefreshTick: {}
   RefreshCompleted: { readonly result: Either.Either<RefreshResult, ApiError> }
   Navigate: { readonly screenName: string }
+  NavigateToProduct: { readonly productId: number }
 }>
 
 export const Msg = Data.taggedEnum<Msg>()
@@ -28,3 +29,4 @@ export const refreshTick = (): Msg => Msg.RefreshTick()
 export const refreshCompleted = (result: Either.Either<RefreshResult, ApiError>): Msg =>
   Msg.RefreshCompleted({ result })
 export const navigate = (screenName: string): Msg => Msg.Navigate({ screenName })
+export const navigateToProduct = (productId: number): Msg => Msg.NavigateToProduct({ productId })
